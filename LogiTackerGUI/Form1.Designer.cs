@@ -49,11 +49,18 @@
             this.textBoxKeys = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.HidHandler = new System.ComponentModel.BackgroundWorker();
+            this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.buttonClearList = new System.Windows.Forms.Button();
+            this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
+            this.buttonClearKeyLogs = new System.Windows.Forms.Button();
+            this.buttonExportJson = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
+            this.tableLayoutPanel2.SuspendLayout();
+            this.tableLayoutPanel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -94,6 +101,7 @@
             // 
             // buttonDecryptHistory
             // 
+            this.buttonDecryptHistory.Enabled = false;
             this.buttonDecryptHistory.Location = new System.Drawing.Point(343, 50);
             this.buttonDecryptHistory.Name = "buttonDecryptHistory";
             this.buttonDecryptHistory.Size = new System.Drawing.Size(90, 23);
@@ -153,7 +161,7 @@
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this.listView1);
+            this.tabPage1.Controls.Add(this.tableLayoutPanel2);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
@@ -171,11 +179,12 @@
             this.payloadLength,
             this.payload,
             this.payloadDecrypted});
+            this.tableLayoutPanel2.SetColumnSpan(this.listView1, 2);
             this.listView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listView1.GridLines = true;
             this.listView1.Location = new System.Drawing.Point(3, 3);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(788, 225);
+            this.listView1.Size = new System.Drawing.Size(782, 189);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -212,13 +221,13 @@
             // 
             // tabPage2
             // 
-            this.tabPage2.Controls.Add(this.textBoxKeys);
+            this.tabPage2.Controls.Add(this.tableLayoutPanel3);
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage2.Size = new System.Drawing.Size(794, 231);
             this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Decrypted keys";
+            this.tabPage2.Text = "Decrypted key presses";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // textBoxKeys
@@ -229,7 +238,7 @@
             this.textBoxKeys.Multiline = true;
             this.textBoxKeys.Name = "textBoxKeys";
             this.textBoxKeys.ReadOnly = true;
-            this.textBoxKeys.Size = new System.Drawing.Size(788, 225);
+            this.textBoxKeys.Size = new System.Drawing.Size(782, 189);
             this.textBoxKeys.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -253,6 +262,72 @@
             this.HidHandler.DoWork += new System.ComponentModel.DoWorkEventHandler(this.HidHandler_DoWork);
             this.HidHandler.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.HidHandler_RunWorkerCompleted);
             // 
+            // tableLayoutPanel2
+            // 
+            this.tableLayoutPanel2.ColumnCount = 2;
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel2.Controls.Add(this.buttonExportJson, 0, 1);
+            this.tableLayoutPanel2.Controls.Add(this.listView1, 0, 0);
+            this.tableLayoutPanel2.Controls.Add(this.buttonClearList, 0, 1);
+            this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(3, 3);
+            this.tableLayoutPanel2.Name = "tableLayoutPanel2";
+            this.tableLayoutPanel2.RowCount = 2;
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(788, 225);
+            this.tableLayoutPanel2.TabIndex = 1;
+            // 
+            // buttonClearList
+            // 
+            this.buttonClearList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.buttonClearList.Location = new System.Drawing.Point(3, 198);
+            this.buttonClearList.Name = "buttonClearList";
+            this.buttonClearList.Size = new System.Drawing.Size(388, 24);
+            this.buttonClearList.TabIndex = 1;
+            this.buttonClearList.Text = "Clear list";
+            this.buttonClearList.UseVisualStyleBackColor = true;
+            this.buttonClearList.Click += new System.EventHandler(this.ButtonClearList_Click);
+            // 
+            // tableLayoutPanel3
+            // 
+            this.tableLayoutPanel3.ColumnCount = 1;
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel3.Controls.Add(this.buttonClearKeyLogs, 0, 1);
+            this.tableLayoutPanel3.Controls.Add(this.textBoxKeys, 0, 0);
+            this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(3, 3);
+            this.tableLayoutPanel3.Name = "tableLayoutPanel3";
+            this.tableLayoutPanel3.RowCount = 2;
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(788, 225);
+            this.tableLayoutPanel3.TabIndex = 1;
+            // 
+            // buttonClearKeyLogs
+            // 
+            this.buttonClearKeyLogs.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.buttonClearKeyLogs.Location = new System.Drawing.Point(3, 198);
+            this.buttonClearKeyLogs.Name = "buttonClearKeyLogs";
+            this.buttonClearKeyLogs.Size = new System.Drawing.Size(782, 24);
+            this.buttonClearKeyLogs.TabIndex = 2;
+            this.buttonClearKeyLogs.Text = "Clear key logs";
+            this.buttonClearKeyLogs.UseVisualStyleBackColor = true;
+            this.buttonClearKeyLogs.Click += new System.EventHandler(this.ButtonClearKeyLogs_Click);
+            // 
+            // buttonExportJson
+            // 
+            this.buttonExportJson.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.buttonExportJson.Location = new System.Drawing.Point(397, 198);
+            this.buttonExportJson.Name = "buttonExportJson";
+            this.buttonExportJson.Size = new System.Drawing.Size(388, 24);
+            this.buttonExportJson.TabIndex = 2;
+            this.buttonExportJson.Text = "Export JSON";
+            this.buttonExportJson.UseVisualStyleBackColor = true;
+            this.buttonExportJson.Click += new System.EventHandler(this.ButtonExportJson_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -260,15 +335,17 @@
             this.ClientSize = new System.Drawing.Size(808, 363);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Name = "Form1";
-            this.Text = "LogiTacker :: Keyboard decoder";
+            this.Text = "LogiTacker :: Raw decoder";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
-            this.tabPage2.PerformLayout();
             this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel2.ResumeLayout(false);
+            this.tableLayoutPanel3.ResumeLayout(false);
+            this.tableLayoutPanel3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -296,6 +373,11 @@
         private System.Windows.Forms.ColumnHeader payloadDecrypted;
         private System.ComponentModel.BackgroundWorker HidHandler;
         private System.Windows.Forms.TextBox textBoxKeys;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
+        private System.Windows.Forms.Button buttonClearList;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel3;
+        private System.Windows.Forms.Button buttonExportJson;
+        private System.Windows.Forms.Button buttonClearKeyLogs;
     }
 }
 
