@@ -293,6 +293,7 @@ namespace LogiTackerGUI {
 
             listView1.Items.Clear();
             frameList.Clear();
+            textBoxKeys.Text = "";
 
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "JSON files (*.json)|*.json";
@@ -302,12 +303,27 @@ namespace LogiTackerGUI {
                 return;
 
             List<AirFrameJSON> inputBuffer;
-            using(StreamReader file = new StreamReader(openFileDialog.FileName))
-                inputBuffer = new JavaScriptSerializer().Deserialize<List<AirFrameJSON>>(file.ReadToEnd());
+            using(StreamReader file = new StreamReader(openFileDialog.FileName)) {
+                try {
+                    inputBuffer = new JavaScriptSerializer().Deserialize<List<AirFrameJSON>>(file.ReadToEnd());
+                } catch {
+                    MessageBox.Show("Invalid JSON file!","Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                    return;
+                }
+            }
+
+            KeyboardLayout us_keyboard = new KeyboardLayout();
 
             foreach(AirFrameJSON item in inputBuffer) {
                 listView1.Items.Insert(0,new ListViewItem(new[] { item.Address,item.PID.ToString(),item.Ch.ToString(),item.Length.ToString(),item.Payload,item.DecryptedPayload }));
-                frameList.Add(new AirFrame(item));
+
+                AirFrame af = new AirFrame(item);
+                frameList.Add(af);
+
+                if(af.decryptedPayload == null || af.decryptedPayload.Length == 0)
+                    continue;
+
+                textBoxKeys.Text += us_keyboard.ToComboKeyPress(af.decryptedPayload);
             }
 
         }
