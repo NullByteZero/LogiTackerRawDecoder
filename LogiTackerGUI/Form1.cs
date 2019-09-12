@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Globalization;
+using System.Web.Script.Serialization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,12 +20,14 @@ namespace LogiTackerGUI {
         DeviceList deviceList;
         HidDevice selectedDevice;
         List<HidDevice> shownDevices;
+        List<AirFrame> frameList;
         bool autoDecrypt = false;
         byte[] deviceKey;
 
         public Form1() {
             deviceList = DeviceList.Local;
             shownDevices = new List<HidDevice>();
+            frameList = new List<AirFrame>();
             InitializeComponent();
         }
 
@@ -83,7 +86,11 @@ namespace LogiTackerGUI {
                 HidHandler.RunWorkerAsync();
                 buttonStart.Text = "Stop";
                 deviceList.Changed -= DeviceListChanged;
+
                 deviceListCombobox.Enabled = false;
+                buttonDecryptHistory.Enabled = false;
+                buttonExportJson.Enabled = false;
+                buttonImportJson.Enabled = false;
             }
         }
 
@@ -119,7 +126,6 @@ namespace LogiTackerGUI {
 
                                         AirFrame af = new AirFrame(inputReportBuffer);
 
-
                                         string address = BitConverter.ToString(af.address).Replace("-",":");
                                         string pid = af.pid.ToString();
                                         string ch = af.rf_channel.ToString();
@@ -130,13 +136,15 @@ namespace LogiTackerGUI {
 
                                         try {
                                             if(autoDecrypt) {
-                                                decryptedPayloadBytes = af.DecryptKeyboardFrame(deviceKey);
+                                                af.DecryptKeyboardFrame(deviceKey);
+                                                decryptedPayloadBytes = af.decryptedPayload;
                                                 decrpytedPayload = BitConverter.ToString(decryptedPayloadBytes);
                                             }
                                         } catch {
                                             decrpytedPayload = "";
                                         }
 
+                                        frameList.Add(af);
 
                                         try {
                                             if(autoDecrypt && decryptedPayloadBytes != null) {
@@ -171,13 +179,47 @@ namespace LogiTackerGUI {
 
         private void HidHandler_RunWorkerCompleted(object sender,RunWorkerCompletedEventArgs e) {
             buttonStart.Text = "Start";
-            deviceListCombobox.Enabled = false;
+            deviceListCombobox.Enabled = true;
+            buttonDecryptHistory.Enabled = true;
+            buttonExportJson.Enabled = true;
+            buttonImportJson.Enabled = true;
             deviceList.Changed += DeviceListChanged;
-            MessageBox.Show("Stoped");
         }
 
         private void ButtonDecryptHistory_Click(object sender,EventArgs e) {
-            MessageBox.Show("Not implemented","WIP",MessageBoxButtons.OK,MessageBoxIcon.Information);
+            if(!isKeyValid()) {
+                MessageBox.Show("Invalid AES key","Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                return;
+            }
+
+            listView1.Items.Clear();
+            textBoxKeys.Text = "";
+
+            KeyboardLayout us_keyboard = new KeyboardLayout();
+
+            foreach(AirFrame af in frameList) {
+                try {
+                    af.DecryptKeyboardFrame(deviceKey);
+                } catch {
+                    af.decryptedPayload = null;
+                }
+
+                string address = BitConverter.ToString(af.address).Replace("-",":");
+                string pid = af.pid.ToString();
+                string ch = af.rf_channel.ToString();
+                string len = af.payloadLength.ToString();
+                string payload = af.payloadLength != 0 ? BitConverter.ToString(af.payload) : "<EMPTY>";
+                string decrpytedPayload = af.decryptedPayload != null ? BitConverter.ToString(af.decryptedPayload) : "";
+
+                listView1.Items.Insert(0,new ListViewItem(new[] { address,pid,ch,len,payload,decrpytedPayload }));
+
+
+
+                if(af.decryptedPayload == null)
+                    continue;
+
+                textBoxKeys.Text += us_keyboard.ToComboKeyPress(af.decryptedPayload);
+            }
         }
 
         private void ButtonAutoDecrypt_Click(object sender,EventArgs e) {
@@ -229,23 +271,45 @@ namespace LogiTackerGUI {
             using(StreamWriter file = new StreamWriter(saveFileDialog.FileName)) {
                 file.Write("[");
 
-                for(int PacketIndex = 0; PacketIndex < listView1.Items.Count; PacketIndex++) {
-                    file.Write("{" +
-                       "\"Address\":\"" + listView1.Items[PacketIndex].SubItems[0].Text + "\"," +
-                       "\"PID\":" + listView1.Items[PacketIndex].SubItems[1].Text + "," +
-                       "\"Ch\":" + listView1.Items[PacketIndex].SubItems[2].Text + "," +
-                       "\"Length\":" + listView1.Items[PacketIndex].SubItems[3].Text + "," +
-                       "\"Payload\":\"" + listView1.Items[PacketIndex].SubItems[4].Text + "\"," +
-                       "\"DecryptedPayload\":\"" + listView1.Items[PacketIndex].SubItems[5].Text + "\"" +
-                       "}");
+                for(int i = 0; i < frameList.Count; i++) {
+                    file.Write(frameList[i].toJSON());
 
-                    if(PacketIndex < listView1.Items.Count - 1)
+                    if(i < frameList.Count - 1)
                         file.Write(",");
                 }
 
                 file.Write("]");
-                MessageBox.Show("Export completed!" + Environment.NewLine + "Keep in mind that the latest packets are at the top.","Done!",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                MessageBox.Show("Export completed!" + Environment.NewLine + "Keep in mind that the latest packets are at the bottom.","Done!",MessageBoxButtons.OK,MessageBoxIcon.Information);
             }
+        }
+
+        private void TextBoxKey_TextChanged(object sender,EventArgs e) {
+            textBoxKey.ForeColor = isKeyValid() ? Color.Black : Color.Red;
+        }
+
+        private void ButtonImportJson_Click(object sender,EventArgs e) {
+            if(MessageBox.Show("This will override your current data, do you want to continue?","Are you sure?",MessageBoxButtons.YesNo,MessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+
+            listView1.Items.Clear();
+            frameList.Clear();
+
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "JSON files (*.json)|*.json";
+            openFileDialog.RestoreDirectory = true;
+
+            if(openFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                return;
+
+            List<AirFrameJSON> inputBuffer;
+            using(StreamReader file = new StreamReader(openFileDialog.FileName))
+                inputBuffer = new JavaScriptSerializer().Deserialize<List<AirFrameJSON>>(file.ReadToEnd());
+
+            foreach(AirFrameJSON item in inputBuffer) {
+                listView1.Items.Insert(0,new ListViewItem(new[] { item.Address,item.PID.ToString(),item.Ch.ToString(),item.Length.ToString(),item.Payload,item.DecryptedPayload }));
+                frameList.Add(new AirFrame(item));
+            }
+
         }
     }
 }

